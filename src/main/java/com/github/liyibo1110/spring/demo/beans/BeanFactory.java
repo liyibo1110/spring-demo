@@ -1,0 +1,14 @@
+package com.github.liyibo1110.spring.demo.beans;
+
+/**
+ * 单例工厂的抽象
+ */
+public interface BeanFactory {
+
+    /**
+     * 从IOC容器获取一个Bean实例
+     * @param beanName
+     * @return
+     */
+    public Object getBean(String beanName);
+}
