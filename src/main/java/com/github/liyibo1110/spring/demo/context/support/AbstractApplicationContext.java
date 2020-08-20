@@ -5,7 +5,7 @@ package com.github.liyibo1110.spring.demo.context.support;
  */
 public abstract class AbstractApplicationContext {
 
-    protected void refresh(){
+    protected void refresh() throws Exception {
 
     }
 }

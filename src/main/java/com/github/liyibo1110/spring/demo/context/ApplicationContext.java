@@ -1,11 +1,13 @@
 package com.github.liyibo1110.spring.demo.context;
 
+import com.github.liyibo1110.spring.demo.beans.BeanWrapper;
 import com.github.liyibo1110.spring.demo.beans.config.BeanDefinition;
 import com.github.liyibo1110.spring.demo.beans.support.BeanDefinitionReader;
 import com.github.liyibo1110.spring.demo.beans.support.DefaultListableBeanFactory;
 import com.github.liyibo1110.spring.demo.beans.BeanFactory;
 
 import java.util.List;
+import java.util.Map;
 
 public class ApplicationContext extends DefaultListableBeanFactory implements BeanFactory {
 
@@ -15,11 +17,15 @@ public class ApplicationContext extends DefaultListableBeanFactory implements Be
 
     public ApplicationContext(String... configLocations) {
         this.configLocations = configLocations;
-        refresh();
+        try {
+            refresh();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
-    public void refresh() {
+    public void refresh() throws Exception {
 
         // 1.定位配置文件
         reader = new BeanDefinitionReader(this.configLocations);
@@ -35,17 +41,37 @@ public class ApplicationContext extends DefaultListableBeanFactory implements Be
     }
 
     private void doAutowired() {
-
+        for(Map.Entry<String, BeanDefinition> entry : beanDefinitionMap.entrySet()) {
+            String beanName = entry.getKey();
+            if(!entry.getValue().isLazyInit()) {
+                getBean(beanName);
+            }
+        }
     }
 
-    private void doRegisterBeanDefinition(List<BeanDefinition> beanDefinitions) {
+    private void doRegisterBeanDefinition(List<BeanDefinition> beanDefinitions) throws Exception {
 
+        for(BeanDefinition beanDefinition : beanDefinitions) {
+            if(beanDefinitionMap.containsKey(beanDefinition.getFactoryBeanName())) {
+                throw new Exception("The \"" + beanDefinition.getFactoryBeanName() + "\" is exists!");
+            }
+            beanDefinitionMap.put(beanDefinition.getFactoryBeanName(), beanDefinition);
+        }
     }
 
     @Override
     public Object getBean(String beanName) {
+        // 1.初始化
+
+        // 2.注入
         return null;
     }
 
+    private void instantiateBean(String beanName, BeanDefinition beanDefinition) {
 
+    }
+
+    private void populateBean(String beanName, BeanDefinition beanDefinition, BeanWrapper wrapper) {
+
+    }
 }

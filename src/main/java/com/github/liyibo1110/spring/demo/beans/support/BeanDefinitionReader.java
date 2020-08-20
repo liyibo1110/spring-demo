@@ -59,6 +59,30 @@ public class BeanDefinitionReader {
     }
 
     public List<BeanDefinition> loadBeanDefinitions() {
+
+        List<BeanDefinition> list = new ArrayList<>();
+        for(String className : registryBeanClasses) {
+            BeanDefinition beanDefinition = doCreateBeanDefinition(className);
+            if(null != beanDefinition) {
+                list.add(beanDefinition);
+            }
+        }
+        return list;
+    }
+
+    private BeanDefinition doCreateBeanDefinition(String className) {
+
+        try {
+            Class<?> beanClass = Class.forName(className);
+            // 跳过接口
+            if(beanClass.isInterface()) return null;
+            BeanDefinition beanDefinition = new BeanDefinition();
+            beanDefinition.setBeanClassName(className);
+            beanDefinition.setFactoryBeanName(beanClass.getSimpleName());
+            return beanDefinition;
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
         return null;
     }
 

@@ -8,6 +8,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class DefaultListableBeanFactory extends AbstractApplicationContext {
 
-    private final Map<String, BeanDefinition> beanDefinitionMap = new ConcurrentHashMap<>();
+    protected final Map<String, BeanDefinition> beanDefinitionMap = new ConcurrentHashMap<>();
 
 }
