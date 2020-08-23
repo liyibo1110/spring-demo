@@ -8,12 +8,20 @@ import com.github.liyibo1110.spring.demo.beans.BeanFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ApplicationContext extends DefaultListableBeanFactory implements BeanFactory {
 
     private String[] configLocations;
 
     private BeanDefinitionReader reader;
+
+    /**
+     * 单例IOC容器缓存
+     */
+    private Map<String, Object> singletonObjects = new ConcurrentHashMap<>();
+
+    private Map<String, BeanWrapper> factoryBeanInstanceCache = new ConcurrentHashMap<>();
 
     public ApplicationContext(String... configLocations) {
         this.configLocations = configLocations;
@@ -62,13 +70,37 @@ public class ApplicationContext extends DefaultListableBeanFactory implements Be
     @Override
     public Object getBean(String beanName) {
         // 1.初始化
+        BeanWrapper beanWrapper = instantiateBean(beanName, new BeanDefinition());
 
-        // 2.注入
+        // 2.保存到IOC容器
+
+        // 3.注入
+        populateBean(beanName, new BeanDefinition(), beanWrapper);
         return null;
     }
 
-    private void instantiateBean(String beanName, BeanDefinition beanDefinition) {
+    private BeanWrapper instantiateBean(String beanName, BeanDefinition beanDefinition) {
+        // 1.获取真正的类名
+        String className = beanDefinition.getBeanClassName();
+        // 2.实例化
+        Object instance = null;
+        try {
+            // 暂时认为默认就是单例Bean
+            if(singletonObjects.containsKey(className)) {
+                instance = singletonObjects.get(className);
+            }else {
+                Class<?> clazz = Class.forName(className);
+                instance = clazz.newInstance();
+                singletonObjects.put(className, instance);
+                singletonObjects.put(beanDefinition.getFactoryBeanName(), instance);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        // 3.封装成BeanWrapper，容器名字为singletonObjects和factoryBeanInstanceCache
+        BeanWrapper beanWrapper = new BeanWrapper(instance);
 
+        return beanWrapper;
     }
 
     private void populateBean(String beanName, BeanDefinition beanDefinition, BeanWrapper wrapper) {

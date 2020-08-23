@@ -8,6 +8,8 @@ public class BeanDefinition {
 
     private String factoryBeanName;
 
+    private boolean singleton = true;
+
     public String getBeanClassName() {
         return beanClassName;
     }
@@ -30,5 +32,13 @@ public class BeanDefinition {
 
     public void setFactoryBeanName(String factoryBeanName) {
         this.factoryBeanName = factoryBeanName;
+    }
+
+    public boolean isSingleton() {
+        return singleton;
+    }
+
+    public void setSingleton(boolean singleton) {
+        this.singleton = singleton;
     }
 }
