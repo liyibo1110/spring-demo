@@ -1,4 +1,4 @@
-package com.github.liyibo1110.spring.demo.context;
+package com.github.liyibo1110.spring.framework.context;
 
 /**
  * 一种获取IOC容器的抽象，

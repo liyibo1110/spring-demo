@@ -1,11 +1,15 @@
-package com.github.liyibo1110.spring.demo.context;
+package com.github.liyibo1110.spring.framework.context;
 
-import com.github.liyibo1110.spring.demo.beans.BeanWrapper;
-import com.github.liyibo1110.spring.demo.beans.config.BeanDefinition;
-import com.github.liyibo1110.spring.demo.beans.support.BeanDefinitionReader;
-import com.github.liyibo1110.spring.demo.beans.support.DefaultListableBeanFactory;
-import com.github.liyibo1110.spring.demo.beans.BeanFactory;
+import com.github.liyibo1110.spring.framework.annotation.AutoWired;
+import com.github.liyibo1110.spring.framework.annotation.Controller;
+import com.github.liyibo1110.spring.framework.annotation.Service;
+import com.github.liyibo1110.spring.framework.beans.BeanWrapper;
+import com.github.liyibo1110.spring.framework.beans.config.BeanDefinition;
+import com.github.liyibo1110.spring.framework.beans.support.BeanDefinitionReader;
+import com.github.liyibo1110.spring.framework.beans.support.DefaultListableBeanFactory;
+import com.github.liyibo1110.spring.framework.beans.BeanFactory;
 
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,7 +56,11 @@ public class ApplicationContext extends DefaultListableBeanFactory implements Be
         for(Map.Entry<String, BeanDefinition> entry : beanDefinitionMap.entrySet()) {
             String beanName = entry.getKey();
             if(!entry.getValue().isLazyInit()) {
-                getBean(beanName);
+                try {
+                    getBean(beanName);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
@@ -68,15 +76,19 @@ public class ApplicationContext extends DefaultListableBeanFactory implements Be
     }
 
     @Override
-    public Object getBean(String beanName) {
+    public Object getBean(String beanName) throws Exception {
         // 1.初始化
-        BeanWrapper beanWrapper = instantiateBean(beanName, new BeanDefinition());
+        BeanWrapper beanWrapper = instantiateBean(beanName, beanDefinitionMap.get(beanName));
 
         // 2.保存到IOC容器
+        /*if(factoryBeanInstanceCache.containsKey(beanName)) {
+            throw new Exception("The " + beanName + "is exists!");
+        }*/
+        factoryBeanInstanceCache.put(beanName, beanWrapper);
 
         // 3.注入
-        populateBean(beanName, new BeanDefinition(), beanWrapper);
-        return null;
+        populateBean(beanName, beanWrapper);
+        return factoryBeanInstanceCache.get(beanName).getWrappedInstance();
     }
 
     private BeanWrapper instantiateBean(String beanName, BeanDefinition beanDefinition) {
@@ -103,7 +115,31 @@ public class ApplicationContext extends DefaultListableBeanFactory implements Be
         return beanWrapper;
     }
 
-    private void populateBean(String beanName, BeanDefinition beanDefinition, BeanWrapper wrapper) {
+    private void populateBean(String beanName, BeanWrapper beanWrapper) {
 
+        Object instance = beanWrapper.getWrappedInstance();
+
+        Class<?> clazz = beanWrapper.getWrappedClass();
+        // 只有加特定注解的类，才能被尝试注入（Spring原版没有这个规定）
+        if(clazz.isAnnotationPresent(Controller.class) || clazz.isAnnotationPresent(Service.class)) {
+            return;
+        }
+
+        Field[] fields = clazz.getDeclaredFields();
+        for(Field field : fields) {
+            if(!field.isAnnotationPresent(AutoWired.class)) continue;
+            AutoWired autoWired = field.getAnnotation(AutoWired.class);
+            String autoWiredBeanName = autoWired.value().trim();
+            if("".equals(autoWiredBeanName)) {
+                autoWiredBeanName = field.getType().getName();
+            }
+
+            field.setAccessible(true);
+            try {
+                field.set(instance, factoryBeanInstanceCache.get(autoWiredBeanName).getWrappedInstance());
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

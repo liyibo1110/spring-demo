@@ -1,4 +1,4 @@
-package com.github.liyibo1110.spring.demo.beans;
+package com.github.liyibo1110.spring.framework.beans;
 
 public class BeanWrapper {
 

@@ -1,4 +1,4 @@
-package com.github.liyibo1110.spring.demo.context.support;
+package com.github.liyibo1110.spring.framework.context.support;
 
 /**
  * IOC容器的抽象

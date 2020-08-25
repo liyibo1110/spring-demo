@@ -1,4 +1,4 @@
-package com.github.liyibo1110.spring.demo.beans.config;
+package com.github.liyibo1110.spring.framework.beans.config;
 
 public class BeanDefinition {
 

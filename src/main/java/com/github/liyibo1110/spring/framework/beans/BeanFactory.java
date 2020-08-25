@@ -1,4 +1,4 @@
-package com.github.liyibo1110.spring.demo.beans;
+package com.github.liyibo1110.spring.framework.beans;
 
 /**
  * 单例工厂的抽象
@@ -10,5 +10,5 @@ public interface BeanFactory {
      * @param beanName
      * @return
      */
-    Object getBean(String beanName);
+    Object getBean(String beanName) throws Exception;
 }

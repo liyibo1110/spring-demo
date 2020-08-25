@@ -1,6 +1,6 @@
-package com.github.liyibo1110.spring.demo.beans.support;
+package com.github.liyibo1110.spring.framework.beans.support;
 
-import com.github.liyibo1110.spring.demo.beans.config.BeanDefinition;
+import com.github.liyibo1110.spring.framework.beans.config.BeanDefinition;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,9 +43,7 @@ public class BeanDefinitionReader {
 
     private void doScanner(String scanPackage) {
 
-        URL url = this.getClass()
-                      .getClassLoader()
-                      .getResource("/" + scanPackage.replaceAll("\\.", "/"));
+        URL url = this.getClass().getResource("/" + scanPackage.replaceAll("\\.", "/"));
         File classPath = new File(url.getFile());
         for(File file : classPath.listFiles()) {
             if(file.isDirectory()) {
@@ -58,21 +56,43 @@ public class BeanDefinitionReader {
         }
     }
 
+    /**
+     * 将扫描到的所有class文件类名转换成BeanDefinition对象
+     * @return
+     */
     public List<BeanDefinition> loadBeanDefinitions() {
 
         List<BeanDefinition> list = new ArrayList<>();
-        for(String className : registryBeanClasses) {
-            BeanDefinition beanDefinition = doCreateBeanDefinition(className);
-            if(null != beanDefinition) {
-                list.add(beanDefinition);
+        try {
+            for(String className : registryBeanClasses) {
+
+                Class<?> beanClass = Class.forName(className);
+                if(beanClass.isInterface()) continue;
+
+                list.add(doCreateBeanDefinition(toLowerFirstCase(beanClass.getSimpleName()), beanClass.getName()));
+
+                // 如果类实现了接口，还要搞一个接口的版本
+                Class<?>[] interfaces = beanClass.getInterfaces();
+                for(Class<?> i : interfaces) {
+                    // 直接后来的覆盖之前的
+                    list.add(doCreateBeanDefinition(i.getName(), beanClass.getName()));
+                }
             }
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
         }
+
         return list;
     }
 
-    private BeanDefinition doCreateBeanDefinition(String className) {
+    private BeanDefinition doCreateBeanDefinition(String factoryBeanName, String beanClassName) {
 
-        try {
+        BeanDefinition beanDefinition = new BeanDefinition();
+        beanDefinition.setBeanClassName(beanClassName);
+        beanDefinition.setFactoryBeanName(factoryBeanName);
+        return beanDefinition;
+
+        /*try {
             Class<?> beanClass = Class.forName(className);
             // 跳过接口
             if(beanClass.isInterface()) return null;
@@ -83,10 +103,16 @@ public class BeanDefinitionReader {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
-        return null;
+        return null;*/
     }
 
     public Properties getConfig() {
         return config;
+    }
+
+    private String toLowerFirstCase(String name) {
+        char[] chars = name.toCharArray();
+        chars[0] += 32;
+        return String.valueOf(chars);
     }
 }

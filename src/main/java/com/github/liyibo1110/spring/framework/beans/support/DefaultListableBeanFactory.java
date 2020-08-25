@@ -1,7 +1,7 @@
-package com.github.liyibo1110.spring.demo.beans.support;
+package com.github.liyibo1110.spring.framework.beans.support;
 
-import com.github.liyibo1110.spring.demo.beans.config.BeanDefinition;
-import com.github.liyibo1110.spring.demo.context.support.AbstractApplicationContext;
+import com.github.liyibo1110.spring.framework.beans.config.BeanDefinition;
+import com.github.liyibo1110.spring.framework.context.support.AbstractApplicationContext;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
