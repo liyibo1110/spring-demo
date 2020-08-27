@@ -121,7 +121,7 @@ public class ApplicationContext extends DefaultListableBeanFactory implements Be
 
         Class<?> clazz = beanWrapper.getWrappedClass();
         // 只有加特定注解的类，才能被尝试注入（Spring原版没有这个规定）
-        if(clazz.isAnnotationPresent(Controller.class) || clazz.isAnnotationPresent(Service.class)) {
+        if(!clazz.isAnnotationPresent(Controller.class) && clazz.isAnnotationPresent(Service.class)) {
             return;
         }
 
@@ -136,6 +136,13 @@ public class ApplicationContext extends DefaultListableBeanFactory implements Be
 
             field.setAccessible(true);
             try {
+                // 临时处理
+                if(factoryBeanInstanceCache.get(autoWiredBeanName) == null) {
+                    continue;
+                }
+                if(instance == null) {
+                    continue;
+                }
                 field.set(instance, factoryBeanInstanceCache.get(autoWiredBeanName).getWrappedInstance());
             } catch (IllegalAccessException e) {
                 e.printStackTrace();

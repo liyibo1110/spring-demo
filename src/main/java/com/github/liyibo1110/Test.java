@@ -6,6 +6,7 @@ public class Test {
 
     public static void main(String[] args) {
         ApplicationContext context = new ApplicationContext("classpath:application.properties");
-        System.out.println(context);
+        // System.out.println(context);
+        // context.getBean("MyCo")
     }
 }
