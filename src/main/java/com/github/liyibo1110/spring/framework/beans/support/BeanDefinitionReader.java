@@ -70,7 +70,7 @@ public class BeanDefinitionReader {
                 if(beanClass.isInterface()) continue;
 
                 list.add(doCreateBeanDefinition(toLowerFirstCase(beanClass.getSimpleName()), beanClass.getName()));
-
+                list.add(doCreateBeanDefinition(beanClass.getName(), beanClass.getName()));
                 // 如果类实现了接口，还要搞一个接口的版本
                 Class<?>[] interfaces = beanClass.getInterfaces();
                 for(Class<?> i : interfaces) {

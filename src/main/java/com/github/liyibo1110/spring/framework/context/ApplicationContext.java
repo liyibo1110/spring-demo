@@ -5,6 +5,7 @@ import com.github.liyibo1110.spring.framework.annotation.Controller;
 import com.github.liyibo1110.spring.framework.annotation.Service;
 import com.github.liyibo1110.spring.framework.beans.BeanWrapper;
 import com.github.liyibo1110.spring.framework.beans.config.BeanDefinition;
+import com.github.liyibo1110.spring.framework.beans.config.BeanPostProcessor;
 import com.github.liyibo1110.spring.framework.beans.support.BeanDefinitionReader;
 import com.github.liyibo1110.spring.framework.beans.support.DefaultListableBeanFactory;
 import com.github.liyibo1110.spring.framework.beans.BeanFactory;
@@ -75,23 +76,40 @@ public class ApplicationContext extends DefaultListableBeanFactory implements Be
         }
     }
 
+    public Object getBean(Class<?> beanClass) throws Exception {
+        return getBean(beanClass.getName());
+    }
+
     @Override
     public Object getBean(String beanName) throws Exception {
+
+        Object instance = null;
+
+        // 工厂 + 策略（逻辑待完善）
+        BeanPostProcessor beanPostProcessor = new BeanPostProcessor();
+        beanPostProcessor.postProcessBeforeInitialization(instance, beanName);
+
         // 1.初始化
-        BeanWrapper beanWrapper = instantiateBean(beanName, beanDefinitionMap.get(beanName));
+        instance = instantiateBean(beanName, beanDefinitionMap.get(beanName));
 
         // 2.保存到IOC容器
         /*if(factoryBeanInstanceCache.containsKey(beanName)) {
             throw new Exception("The " + beanName + "is exists!");
         }*/
+
+        // 3.封装成BeanWrapper，容器名字为singletonObjects和factoryBeanInstanceCache
+        BeanWrapper beanWrapper = new BeanWrapper(instance);
+
         factoryBeanInstanceCache.put(beanName, beanWrapper);
+
+        beanPostProcessor.postProcessAfterInitialization(instance, beanName);
 
         // 3.注入
         populateBean(beanName, beanWrapper);
         return factoryBeanInstanceCache.get(beanName).getWrappedInstance();
     }
 
-    private BeanWrapper instantiateBean(String beanName, BeanDefinition beanDefinition) {
+    private Object instantiateBean(String beanName, BeanDefinition beanDefinition) {
         // 1.获取真正的类名
         String className = beanDefinition.getBeanClassName();
         // 2.实例化
@@ -109,10 +127,8 @@ public class ApplicationContext extends DefaultListableBeanFactory implements Be
         } catch (Exception e) {
             e.printStackTrace();
         }
-        // 3.封装成BeanWrapper，容器名字为singletonObjects和factoryBeanInstanceCache
-        BeanWrapper beanWrapper = new BeanWrapper(instance);
 
-        return beanWrapper;
+        return instance;
     }
 
     private void populateBean(String beanName, BeanWrapper beanWrapper) {
@@ -136,7 +152,7 @@ public class ApplicationContext extends DefaultListableBeanFactory implements Be
 
             field.setAccessible(true);
             try {
-                // 临时处理
+                // 临时处理，待完善
                 if(factoryBeanInstanceCache.get(autoWiredBeanName) == null) {
                     continue;
                 }
@@ -148,5 +164,13 @@ public class ApplicationContext extends DefaultListableBeanFactory implements Be
                 e.printStackTrace();
             }
         }
+    }
+
+    public String[] getBeanDefinitionNames() {
+        return this.beanDefinitionMap.keySet().toArray(new String[this.beanDefinitionMap.size()]);
+    }
+
+    public int getBeanDefinitionCount() {
+        return this.beanDefinitionMap.size();
     }
 }
