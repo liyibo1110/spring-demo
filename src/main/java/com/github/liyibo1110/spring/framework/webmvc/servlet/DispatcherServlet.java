@@ -12,6 +12,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -30,6 +31,8 @@ public class DispatcherServlet extends HttpServlet {
 
     private Map<HandlerMapping, HandlerAdaptor> handlerAdapters = new HashMap<>();
 
+    private List<ViewResolver> viewResolvers = new ArrayList<>();
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         this.doPost(request, response);
@@ -38,8 +41,9 @@ public class DispatcherServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try {
-            this.doDispatcher(request, response);
+            this.doDispatch(request, response);
         } catch (Exception e) {
+            // new ModelAndView("500");
             response.getWriter().write("500 Exception, Detail:\r\n" + Arrays.toString(e.getStackTrace()).replaceAll("\\[|\\]", "")
                                                                                                            .replaceAll(",\\s", "\r\n"));
             e.printStackTrace();
@@ -120,7 +124,7 @@ public class DispatcherServlet extends HttpServlet {
 
     private void initHandlerAdapters(ApplicationContext context) {
 
-        for(HandlerMapping mapping : handlerMappings) {
+        for(HandlerMapping handler : handlerMappings) {
 
         }
     }
@@ -132,15 +136,46 @@ public class DispatcherServlet extends HttpServlet {
     }
 
     private void initViewResolvers(ApplicationContext context) {
+
+        String templateRoot = context.getConfig().getProperty("templateRoot");
+        String templateRootPath = this.getClass().getClassLoader().getResource(templateRoot).getFile();
+        File templateRootDir = new File(templateRootPath);
+        String[] templates = templateRootDir.list();
+        for (int i = 0; i < templates.length; i++) {
+            viewResolvers.add(new ViewResolver(templateRoot));
+        }
     }
 
     private void initFlashMapManager(ApplicationContext context) {
     }
 
-    private void doDispatcher(HttpServletRequest request, HttpServletResponse response) throws Exception {
+    private void doDispatch(HttpServletRequest request, HttpServletResponse response) throws Exception {
 
         // 1、根据request尝试匹配HandlerMapping
         HandlerMapping handler = getHandler(request);
+        if(handler == null) {
+            // new ModelAndView("404");
+            return;
+        }
+
+        // 2、获取HandlerAdapter
+        HandlerAdaptor adaptor = getHandlerAdaptor(handler);
+
+        // 3、调用方法
+        ModelAndView mv = adaptor.handle(request, response, handler);
+
+        processDispatchResult(request, response, mv);
+    }
+
+    private void processDispatchResult(HttpServletRequest request, HttpServletResponse response, ModelAndView mv) {
+
+        // 将ModelAndView对象转换成最终输出的内容
+        if(mv == null) return;
+    }
+
+    private HandlerAdaptor getHandlerAdaptor(HandlerMapping handler) {
+
+        return null;
     }
 
     private HandlerMapping getHandler(HttpServletRequest request) {

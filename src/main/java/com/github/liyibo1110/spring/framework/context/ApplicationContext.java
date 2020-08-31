@@ -13,6 +13,7 @@ import com.github.liyibo1110.spring.framework.beans.BeanFactory;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ApplicationContext extends DefaultListableBeanFactory implements BeanFactory {
@@ -172,5 +173,9 @@ public class ApplicationContext extends DefaultListableBeanFactory implements Be
 
     public int getBeanDefinitionCount() {
         return this.beanDefinitionMap.size();
+    }
+
+    public Properties getConfig() {
+        return this.reader.getConfig();
     }
 }
