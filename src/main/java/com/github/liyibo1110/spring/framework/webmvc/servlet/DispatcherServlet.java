@@ -125,7 +125,7 @@ public class DispatcherServlet extends HttpServlet {
     private void initHandlerAdapters(ApplicationContext context) {
 
         for(HandlerMapping handler : handlerMappings) {
-
+            handlerAdapters.put(handler, new HandlerAdaptor());
         }
     }
 
@@ -159,10 +159,10 @@ public class DispatcherServlet extends HttpServlet {
         }
 
         // 2、获取HandlerAdapter
-        HandlerAdaptor adaptor = getHandlerAdaptor(handler);
+        HandlerAdaptor ha = getHandlerAdaptor(handler);
 
         // 3、调用方法
-        ModelAndView mv = adaptor.handle(request, response, handler);
+        ModelAndView mv = ha.handle(request, response, handler);
 
         processDispatchResult(request, response, mv);
     }
@@ -175,6 +175,9 @@ public class DispatcherServlet extends HttpServlet {
 
     private HandlerAdaptor getHandlerAdaptor(HandlerMapping handler) {
 
+        if(handlerAdapters.isEmpty()) return null;
+        HandlerAdaptor ha = handlerAdapters.get(handler);
+        if(ha.supports(handler)) return ha;
         return null;
     }
 
