@@ -43,9 +43,9 @@ public class DispatcherServlet extends HttpServlet {
         try {
             this.doDispatch(request, response);
         } catch (Exception e) {
-            // new ModelAndView("500");
-            response.getWriter().write("500 Exception, Detail:\r\n" + Arrays.toString(e.getStackTrace()).replaceAll("\\[|\\]", "")
-                                                                                                           .replaceAll(",\\s", "\r\n"));
+            processDispatchResult(request, response, new ModelAndView("500"));
+            /*response.getWriter().write("500 Exception, Detail:\r\n" + Arrays.toString(e.getStackTrace()).replaceAll("\\[|\\]", "")
+                                                                                                           .replaceAll(",\\s", "\r\n"));*/
             e.printStackTrace();
         }
     }
@@ -154,7 +154,7 @@ public class DispatcherServlet extends HttpServlet {
         // 1、根据request尝试匹配HandlerMapping
         HandlerMapping handler = getHandler(request);
         if(handler == null) {
-            // new ModelAndView("404");
+            processDispatchResult(request, response, new ModelAndView("404"));
             return;
         }
 
@@ -164,13 +164,24 @@ public class DispatcherServlet extends HttpServlet {
         // 3、调用方法
         ModelAndView mv = ha.handle(request, response, handler);
 
+        // 真正输出内容
         processDispatchResult(request, response, mv);
     }
 
     private void processDispatchResult(HttpServletRequest request, HttpServletResponse response, ModelAndView mv) {
 
         // 将ModelAndView对象转换成最终输出的内容
-        if(mv == null) return;
+        if(mv == null || viewResolvers.isEmpty()) return;
+
+        for(ViewResolver viewResolver : viewResolvers) {
+            View view = viewResolver.resolveViewName(mv.getViewName(), null);
+            try {
+                view.render(mv.getModel(), request, response);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return;
+        }
     }
 
     private HandlerAdaptor getHandlerAdaptor(HandlerMapping handler) {
