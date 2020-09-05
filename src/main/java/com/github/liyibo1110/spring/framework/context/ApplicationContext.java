@@ -3,6 +3,11 @@ package com.github.liyibo1110.spring.framework.context;
 import com.github.liyibo1110.spring.framework.annotation.AutoWired;
 import com.github.liyibo1110.spring.framework.annotation.Controller;
 import com.github.liyibo1110.spring.framework.annotation.Service;
+import com.github.liyibo1110.spring.framework.aop.AopProxy;
+import com.github.liyibo1110.spring.framework.aop.CglibAopProxy;
+import com.github.liyibo1110.spring.framework.aop.JdkDynamicAopProxy;
+import com.github.liyibo1110.spring.framework.aop.config.AopConfig;
+import com.github.liyibo1110.spring.framework.aop.support.AdvisedSupport;
 import com.github.liyibo1110.spring.framework.beans.BeanWrapper;
 import com.github.liyibo1110.spring.framework.beans.config.BeanDefinition;
 import com.github.liyibo1110.spring.framework.beans.config.BeanPostProcessor;
@@ -122,6 +127,15 @@ public class ApplicationContext extends DefaultListableBeanFactory implements Be
             }else {
                 Class<?> clazz = Class.forName(className);
                 instance = clazz.newInstance();
+
+                AdvisedSupport config = instantiateAopConfig(beanDefinition);
+                config.setTargetClass(clazz);
+                config.setTarget(instance);
+                // 满足切点规则的类，会生成代理
+                if(config.pointCutMatch()) {
+                    instance = createProxy(config).getProxy();
+                }
+
                 singletonObjects.put(className, instance);
                 singletonObjects.put(beanDefinition.getFactoryBeanName(), instance);
             }
@@ -130,6 +144,25 @@ public class ApplicationContext extends DefaultListableBeanFactory implements Be
         }
 
         return instance;
+    }
+
+    private AdvisedSupport instantiateAopConfig(BeanDefinition beanDefinition) {
+        AopConfig config = new AopConfig();
+        config.setPointCut(reader.getConfig().getProperty("pointCut"));
+        config.setAspectBefore(reader.getConfig().getProperty("aspectBefore"));
+        config.setAspectAfter(reader.getConfig().getProperty("aspectAfter"));
+        config.setAspectClass(reader.getConfig().getProperty("aspectClass"));
+        config.setAspectAfterThrow(reader.getConfig().getProperty("aspectAfterThrow"));
+        config.setAspectAfterThrowingName(reader.getConfig().getProperty("aspectAfterThrowingName"));
+        return new AdvisedSupport(config);
+    }
+
+    private AopProxy createProxy(AdvisedSupport config) {
+        Class<?> targetClass = config.getTargetClass();
+        if(targetClass.getInterfaces().length > 0) {
+            return new JdkDynamicAopProxy(config);
+        }
+        return new CglibAopProxy(config);
     }
 
     private void populateBean(String beanName, BeanWrapper beanWrapper) {
